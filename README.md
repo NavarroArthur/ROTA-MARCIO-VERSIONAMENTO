@@ -1,7 +1,3 @@
-Aqui está o arquivo README traduzido para o português, mantendo a formatação técnica e traduzindo os comentários dentro dos blocos de código para facilitar o entendimento.
-
------
-
 # 🗺️ Sistema de Roteamento Urbano com Algoritmo de Dijkstra (RotaMarcio)
 
 Uma implementação abrangente em Python para encontrar rotas ótimas em redes urbanas utilizando o algoritmo de caminho mais curto de Dijkstra, alimentado por dados do OpenStreetMap via OSMnx.
@@ -316,3 +312,4 @@ Para problemas, dúvidas ou contribuições:
 
 *Boas Rotas\!* 🗺️🚗🚶‍♂️🚴‍♂️
 \#RotaMarcio
+
