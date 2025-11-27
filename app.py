@@ -1,3 +1,20 @@
+import sys, os, subprocess, importlib
+def _ensure_deps():
+    base_dir = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
+    reqs = []
+    p1 = os.path.join(base_dir, 'requirements_app.txt')
+    p2 = os.path.join(base_dir, 'requirements.txt')
+    if os.path.exists(p1): reqs.append(p1)
+    if os.path.exists(p2): reqs.append(p2)
+    names = ['flask','osmnx','networkx','folium','geopy','matplotlib','shapely','scipy']
+    missing = [n for n in names if importlib.util.find_spec(n) is None]
+    if missing:
+        try:
+            for rf in reqs:
+                subprocess.check_call([sys.executable,'-m','pip','install','-r',rf])
+        except Exception:
+            subprocess.check_call([sys.executable,'-m','pip','install']+missing)
+_ensure_deps()
 from flask import Flask, render_template, jsonify, request, send_file
 import osmnx as ox
 import networkx as nx
@@ -11,7 +28,6 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import random
-import os
 import urllib.request
 import urllib.error
 
@@ -44,9 +60,14 @@ def inicializar_sistema():
         grafo = ox.graph_from_place(cidade_atual, network_type='all')
         grafo_proj = ox.project_graph(grafo)
         
+<<<<<<< HEAD
+        # Aplicar randomização de pesos conforme requisitos do projeto
+        randomizar_pesos_grafo(grafo)
+=======
         randomizar_pesos_grafo(grafo)
         proporcao = float(os.environ.get('RANDOMIZAR_ARESTAS_PROP', '0.05'))
         randomizar_arestas_estrutura(grafo, proporcao)
+>>>>>>> 1974a0e (chore: inicializar projeto RotaMarcio com Dijkstra, OSRM e visualizacao)
         
         print(f"✅ Sucesso! {len(grafo.nodes())} nós, {len(grafo.edges())} arestas")
         return True
@@ -69,6 +90,8 @@ def randomizar_pesos_grafo(grafo):
         grafo[origem][destino][chave]['length_original'] = comprimento_original
         grafo[origem][destino][chave]['fator_randomico'] = fator_randomico
 
+<<<<<<< HEAD
+=======
 def randomizar_arestas_estrutura(grafo, proporcao=0.05):
     total = grafo.number_of_edges()
     alvo = max(1, int(total * proporcao))
@@ -78,6 +101,7 @@ def randomizar_arestas_estrutura(grafo, proporcao=0.05):
     for o, d, k in selecionadas:
         grafo[o][d][k]['disabled'] = True
 
+>>>>>>> 1974a0e (chore: inicializar projeto RotaMarcio com Dijkstra, OSRM e visualizacao)
 def dijkstra_customizado(grafo, origem_no, destino_no, peso='length'):
     """
     Implementação customizada do algoritmo de Dijkstra com heapq
@@ -116,9 +140,14 @@ def dijkstra_customizado(grafo, origem_no, destino_no, peso='length'):
             if not dados_aresta:
                 continue
             
+<<<<<<< HEAD
+            # Usar o primeiro conjunto de dados se houver múltiplas arestas
+            info_aresta = list(dados_aresta.values())[0]
+=======
             info_aresta = list(dados_aresta.values())[0]
             if info_aresta.get('disabled'):
                 continue
+>>>>>>> 1974a0e (chore: inicializar projeto RotaMarcio com Dijkstra, OSRM e visualizacao)
             peso_aresta = info_aresta.get(peso, info_aresta.get('length', 1))
             
             distancia = distancia_atual + peso_aresta
@@ -245,16 +274,21 @@ def obter_rota_por_geometria(origem_no, destino_no):
         print(f"Erro ao obter rota por geometria: {e}")
         return {'sucesso': False, 'erro': str(e)}
 
+<<<<<<< HEAD
+=======
 class GraphRouter:
     def __init__(self, grafo):
         self.grafo = grafo
     def shortest_path(self, origem_no, destino_no, peso='length'):
         return dijkstra_customizado(self.grafo, origem_no, destino_no, peso)
 
+>>>>>>> 1974a0e (chore: inicializar projeto RotaMarcio com Dijkstra, OSRM e visualizacao)
 def calcular_rota_entre_pontos(origem_lat, origem_lng, destino_lat, destino_lng, modo='driving'):
     """Calcula rota entre dois pontos usando Dijkstra"""
     try:
         # Encontrar nós mais próximos das coordenadas (com projeção quando disponível)
+        origem_no = None
+        destino_no = None
         try:
             if grafo_proj is not None:
                 from shapely.geometry import Point
@@ -264,15 +298,33 @@ def calcular_rota_entre_pontos(origem_lat, origem_lng, destino_lat, destino_lng,
                 p_destino_proj, _ = ox.projection.project_geometry(p_destino, to_crs=grafo_proj.graph.get('crs'))
                 origem_no = ox.nearest_nodes(grafo_proj, p_origem_proj.x, p_origem_proj.y)
                 destino_no = ox.nearest_nodes(grafo_proj, p_destino_proj.x, p_destino_proj.y)
-            else:
+        except Exception:
+            pass
+        if origem_no is None or destino_no is None:
+            try:
                 origem_no = ox.nearest_nodes(grafo, origem_lng, origem_lat)
                 destino_no = ox.nearest_nodes(grafo, destino_lng, destino_lat)
-        except Exception as e:
-            return {'sucesso': False, 'erro': f'Erro ao encontrar nos mais proximos: {str(e)}'}
+            except Exception as e2:
+                return {'sucesso': False, 'erro': f'Erro ao encontrar nos mais proximos: {str(e2)}'}
 
         if origem_no is None or destino_no is None:
             return {'sucesso': False, 'erro': 'Nao foi possivel encontrar nos validos para as coordenadas fornecidas'}
 
+<<<<<<< HEAD
+        # Usar a função de geometria para obter rota precisa
+        resultado = obter_rota_por_geometria(origem_no, destino_no)
+        
+        if resultado['sucesso']:
+            return {
+                'sucesso': True,
+                'caminho': resultado['caminho'],
+                'distancia': resultado['distancia'],
+                'nos_count': resultado['nos_count'],
+                'modo': modo
+            }
+        else:
+            return {'sucesso': False, 'erro': resultado.get('erro', 'Erro desconhecido')}
+=======
         router = GraphRouter(grafo)
         caminho, distancia_total = router.shortest_path(origem_no, destino_no, 'length')
         if not caminho:
@@ -317,6 +369,7 @@ def calcular_rota_entre_pontos(origem_lat, origem_lng, destino_lat, destino_lng,
             'nos_count': len(caminho),
             'modo': modo
         }
+>>>>>>> 1974a0e (chore: inicializar projeto RotaMarcio com Dijkstra, OSRM e visualizacao)
             
     except Exception as e:
         import traceback
@@ -414,9 +467,13 @@ def api_calcular_rota():
         origem_lng = dados.get('origem_lng')
         destino_lat = dados.get('destino_lat')
         destino_lng = dados.get('destino_lng')
+<<<<<<< HEAD
+        modo = dados.get('modo', 'driving')
+=======
         paradas = dados.get('paradas') or []
         modo = dados.get('modo', 'driving')
         paradas = dados.get('paradas', [])
+>>>>>>> 1974a0e (chore: inicializar projeto RotaMarcio com Dijkstra, OSRM e visualizacao)
         
         if not all([origem_lat, origem_lng, destino_lat, destino_lng]):
             return jsonify({
@@ -424,6 +481,16 @@ def api_calcular_rota():
                 'mensagem': 'Coordenadas incompletas'
             })
         
+<<<<<<< HEAD
+        # Calcular rota
+        resultado = calcular_rota_entre_pontos(
+            float(origem_lat), float(origem_lng),
+            float(destino_lat), float(destino_lng),
+            modo
+        )
+        
+        return jsonify(resultado)
+=======
         # Calcular rota, suportando paradas intermediárias
         pontos = [{'lat': float(origem_lat), 'lng': float(origem_lng)}]
         for p in paradas:
@@ -458,6 +525,7 @@ def api_calcular_rota():
             'nos_count': nos_total,
             'modo': modo
         })
+>>>>>>> 1974a0e (chore: inicializar projeto RotaMarcio com Dijkstra, OSRM e visualizacao)
         
     except Exception as e:
         return jsonify({
@@ -567,27 +635,41 @@ def api_pontos_turisticos():
 # Configuração OSRM (público por padrão; pode ser sobrescrito via env OSRM_URL)
 OSRM_BASE_URL = os.environ.get('OSRM_URL', 'https://router.project-osrm.org')
 
+<<<<<<< HEAD
+def chamar_osrm_route(profile, waypoints):
+=======
 def chamar_osrm_route(profile, waypoints, include_steps=False):
+>>>>>>> 1974a0e (chore: inicializar projeto RotaMarcio com Dijkstra, OSRM e visualizacao)
     try:
         if not waypoints or len(waypoints) < 2:
             return {'sucesso': False, 'mensagem': 'Waypoints insuficientes'}
         if len(waypoints) > 7:
             return {'sucesso': False, 'mensagem': 'Limite excedido: máximo origem + 5 paradas + destino'}
         coords = ';'.join([f"{wp[1]},{wp[0]}" for wp in waypoints])
+<<<<<<< HEAD
+        url = f"{OSRM_BASE_URL}/route/v1/{profile}/{coords}?overview=full&geometries=geojson&steps=false"
+=======
         steps_flag = 'true' if include_steps else 'false'
         url = f"{OSRM_BASE_URL}/route/v1/{profile}/{coords}?overview=full&geometries=geojson&steps={steps_flag}"
+>>>>>>> 1974a0e (chore: inicializar projeto RotaMarcio com Dijkstra, OSRM e visualizacao)
         req = urllib.request.Request(url, headers={'User-Agent': 'RotaMarcio/1.0'})
         with urllib.request.urlopen(req, timeout=12) as resp:
             data = json.loads(resp.read().decode('utf-8'))
         if 'routes' not in data or not data['routes']:
             return {'sucesso': False, 'mensagem': 'OSRM não retornou rotas'}
         r0 = data['routes'][0]
+<<<<<<< HEAD
+        return {
+=======
         resultado = {
+>>>>>>> 1974a0e (chore: inicializar projeto RotaMarcio com Dijkstra, OSRM e visualizacao)
             'sucesso': True,
             'distance_m': r0.get('distance'),
             'duration_s': r0.get('duration'),
             'geometry_geojson': r0.get('geometry')
         }
+<<<<<<< HEAD
+=======
         if include_steps:
             legs = r0.get('legs') or []
             passos = []
@@ -641,6 +723,7 @@ def chamar_osrm_route(profile, waypoints, include_steps=False):
                     })
             resultado['passos'] = passos
         return resultado
+>>>>>>> 1974a0e (chore: inicializar projeto RotaMarcio com Dijkstra, OSRM e visualizacao)
     except urllib.error.URLError as e:
         return {'sucesso': False, 'mensagem': f'Erro de rede ao chamar OSRM: {e}'}
     except Exception as e:
@@ -652,7 +735,10 @@ def api_rota_osrm():
         dados = request.json or {}
         profile = dados.get('profile', 'driving')
         waypoints = dados.get('waypoints')
+<<<<<<< HEAD
+=======
         include_steps = bool(dados.get('include_steps'))
+>>>>>>> 1974a0e (chore: inicializar projeto RotaMarcio com Dijkstra, OSRM e visualizacao)
         if not isinstance(waypoints, list):
             return jsonify({'sucesso': False, 'mensagem': 'Parâmetro waypoints inválido'})
         wps = []
@@ -660,7 +746,11 @@ def api_rota_osrm():
             if not isinstance(wp, (list, tuple)) or len(wp) != 2:
                 return jsonify({'sucesso': False, 'mensagem': 'Waypoint inválido'})
             wps.append([float(wp[0]), float(wp[1])])
+<<<<<<< HEAD
+        resultado = chamar_osrm_route(profile, wps)
+=======
         resultado = chamar_osrm_route(profile, wps, include_steps)
+>>>>>>> 1974a0e (chore: inicializar projeto RotaMarcio com Dijkstra, OSRM e visualizacao)
         return jsonify(resultado)
     except Exception as e:
         import traceback
@@ -701,6 +791,8 @@ def api_desvio_parada():
         print(f"Erro na API desvio_parada: {traceback.format_exc()}")
         return jsonify({'sucesso': False, 'mensagem': f'Erro ao calcular desvio: {str(e)}'})
 
+<<<<<<< HEAD
+=======
 @app.route('/api/grafo_visual', methods=['POST'])
 def api_grafo_visual():
     try:
@@ -835,6 +927,7 @@ def api_grafo_visual():
         except Exception:
             return jsonify({'sucesso': False, 'mensagem': 'Falha ao gerar imagem do grafo'}), 200
 
+>>>>>>> 1974a0e (chore: inicializar projeto RotaMarcio com Dijkstra, OSRM e visualizacao)
 if __name__ == '__main__':
     if inicializar_sistema():
         print("🚀 Iniciando servidor Flask...")
